@@ -25,7 +25,9 @@ python -m benchmark.runner --backend polars --smoke
 
 ## Quickstart (Colab, GPU)
 
-Open [`notebooks/colab_run.ipynb`](notebooks/colab_run.ipynb) in Google Colab, set **Runtime → Change runtime type → T4 GPU**, and Run All. It verifies the GPU, runs the same benchmarks under pandas and cuDF, and plots the speedups.
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/alexislowys/cudf-bench/blob/main/notebooks/colab_run.ipynb)
+
+Open [`notebooks/colab_run.ipynb`](notebooks/colab_run.ipynb) in Google Colab (badge above), set **Runtime → Change runtime type → T4 GPU**, and Run All. It verifies the GPU, runs the same benchmarks under pandas and cuDF, and plots the speedups.
 
 ## Running a real benchmark
 
