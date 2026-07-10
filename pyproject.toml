@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cudf-bench"
+version = "0.1.0"
+description = "Fair benchmark harness for hunting performance anomalies in NVIDIA cuDF"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Alexis Low" }]
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.0",
+    "polars>=1.0",
+    "matplotlib>=3.8",
+]
+# cudf is intentionally NOT a dependency: it needs an NVIDIA GPU and is
+# provided by the environment (Google Colab, or `pip install cudf-cu12`).
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.setuptools]
+packages = ["benchmark"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
