@@ -6,13 +6,13 @@ Started 2026-07-10.
 ## Phase 0 — Get a GPU (week 1, by Jul 17)
 
 - [x] Repo + benchmark harness scaffolded
-- [ ] Colab account, T4 runtime verified with `nvidia-smi`
-- [ ] `notebooks/colab_run.ipynb` runs end-to-end on T4
+- [x] Colab account, T4 runtime verified with `nvidia-smi` (2026-07-11)
+- [x] `notebooks/colab_run.ipynb` runs end-to-end on T4 (results in `results/results.csv`)
 
 ## Phase 1 — Learn what "normal" looks like (weeks 1–2, by Jul 24)
 
 - [ ] Redo a familiar pandas workflow in cuDF (API is nearly identical)
-- [ ] First timings: cuDF vs pandas on 10M+ rows — expect 10–50x wins
+- [x] First timings: cuDF vs pandas on 10M rows — 18–40x on numeric ops, 245–405x on string ops (pandas object-string baseline is weak; Polars comparison needed)
 - [ ] Read: "What is a CUDA kernel" + "GPU vs CPU memory (why copies are slow)"
 
 ## Phase 2 — Fair stopwatch (weeks 3–4, by Aug 7)
