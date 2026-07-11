@@ -1,57 +1,46 @@
-# Roadmap
+# Roadmap (sprint)
 
-Goal: find, diagnose, and fix a real performance anomaly in NVIDIA's cuDF.
-Started 2026-07-10.
+Goal: find, diagnose, and fix a real performance anomaly in NVIDIA's cuDF — as fast as possible.
+Each step is one focused session. Started 2026-07-10.
 
-## Phase 0 — Get a GPU (week 1, by Jul 17)
+## Done
 
-- [x] Repo + benchmark harness scaffolded
-- [x] Colab account, T4 runtime verified with `nvidia-smi` (2026-07-11)
-- [x] `notebooks/colab_run.ipynb` runs end-to-end on T4 (results in `results/results.csv`)
+- [x] Repo + benchmark harness (fair timer: warmup/sync/median, deterministic datagen with skew, CSV logging)
+- [x] Colab T4 verified, notebook runs end-to-end
+- [x] First results: 10M rows, cuDF 18–40x vs pandas on numeric ops, 245–405x on string ops
 
-## Phase 1 — Learn what "normal" looks like (weeks 1–2, by Jul 24)
+## Step 1 — Stress grid (1 Colab session, ~1 hr)
 
-- [ ] Redo a familiar pandas workflow in cuDF (API is nearly identical)
-- [x] First timings: cuDF vs pandas on 10M rows — 18–40x on numeric ops, 245–405x on string ops (pandas object-string baseline is weak; Polars comparison needed)
-- [ ] Read: "What is a CUDA kernel" + "GPU vs CPU memory (why copies are slow)"
+- [ ] Run pandas + polars + cudf across: sizes (1e6, 1e7, 3e7), skew (0, 1.5), string ops
+- [ ] Push toward T4 memory limit (3e7+ rows) — OOM behavior is itself a finding
+- [ ] Commit results CSV
 
-## Phase 2 — Fair stopwatch (weeks 3–4, by Aug 7)
+## Step 2 — Pick the anomaly (same day, ~30 min)
 
-- [x] Data generator with size / columns / skew / string-length knobs
-- [x] Timer handling warm-up, async execution, repetition (median of 5+)
-- [x] CSV results logger with backend version + device metadata
-- [ ] Sanity check on GPU: groupby at 3 sizes — bigger takes longer, cuDF beats pandas
+- [ ] Compute full speedup grid; find cells where cuDF's win collapses, loses to Polars, or scales worse than linear
+- [ ] Pick the single worst one
 
-## Phase 3 — Stress-test matrix (weeks 4–5, by Aug 14)
+## Step 3 — Diagnose (1–2 sessions)
 
-- [ ] Grid: 7 ops × sizes × skew × string lengths × (data > GPU memory)
-- [ ] Overnight full-grid run, all results committed
-- [ ] Speedup plots per grid cell; circle the anomalies
-- [ ] **Blog post #1:** "I benchmarked cuDF across N scenarios — where it shines and where it struggles"
-
-## Phase 4 — Find the jammed gear (weeks 5–7, by Aug 28)
-
-- [ ] Pick the single worst anomaly
-- [ ] Profile with Nsight Systems (`nsys profile python ...`), read the timeline
-- [ ] Locate the slow path in cuDF's source on GitHub
-- [ ] Search cuDF issues for prior reports
+- [ ] Break the slow op into stages with targeted timings; profile with Nsight Systems if needed
+- [ ] Find the slow path in cuDF source; search rapidsai/cudf issues for prior reports
 - [ ] One-paragraph hypothesis: "X is slow on Y data because Z"
 
-## Phase 5 — Fix it or prove it (weeks 8–9, by Sep 11)
+## Step 4 — Fix or prove (1–3 sessions, the real work)
 
-- [ ] Route A: evidence-backed GitHub issue → guided fix → PR to rapidsai/cudf
-- [ ] Route B (fallback): custom kernel / smarter algorithm beating cuDF on the problem case
+- [ ] File evidence-backed issue on rapidsai/cudf (this alone is a contribution — do it early, maintainers respond while you keep working)
+- [ ] Route A: PR the fix upstream (merge timing is theirs, not yours — don't block on it)
+- [ ] Route B: faster custom implementation (Numba/CuPy kernel or smarter algorithm) beating cuDF on the problem case
 
-## Phase 6 — Tell the story (weeks 10–12, by Oct 2)
+## Step 5 — Write-up (1 session)
 
-- [ ] README lets a stranger reproduce every number in < 30 min
-- [ ] **Blog post #2:** anomaly → Nsight timeline → hypothesis → fix → before/after
-- [ ] Share: Hacker News, r/CUDA, r/dataengineering, LinkedIn
-- [ ] Resume line with the measured improvement
+- [ ] README: a stranger reproduces every number in < 30 min
+- [ ] One write-up: anomaly → profile → hypothesis → fix → before/after chart
+- [ ] Post it (HN, r/CUDA, LinkedIn); resume line with measured numbers
 
 ## Rules of thumb when stuck
 
-- Stuck > 2 days on setup → switch environments (Colab ↔ cloud VM), don't fight it.
-- Can't read a profiler timeline → post it on the RAPIDS Slack (rapids.ai); maintainers answer beginners.
-- No anomalies anywhere → push harder on skew, strings, and data bigger than GPU memory. Anomalies live at the edges.
-- Feeling unqualified to fix NVIDIA's code → Route B exists, and a well-documented issue report alone has real value.
+- Stuck > half a day on setup → switch environments, don't fight it.
+- Can't read a profile → RAPIDS Slack (rapids.ai); maintainers answer beginners.
+- No anomalies → push harder on skew, strings, and data bigger than GPU memory.
+- "Not qualified to fix NVIDIA's code" → Route B exists; a well-documented issue report already has real value.
