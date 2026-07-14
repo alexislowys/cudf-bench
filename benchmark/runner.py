@@ -34,6 +34,7 @@ CSV_FIELDS = [
     "rows",
     "n_keys",
     "skew",
+    "str_cols",
     "str_len",
     "warmup",
     "reps",
@@ -57,6 +58,12 @@ def parse_args(argv=None) -> argparse.Namespace:
     p.add_argument("--skew", default="0", help="comma-separated key-skew exponents, e.g. 0,1.1")
     p.add_argument("--n-keys", type=int, default=None, help="distinct keys (default rows/10, capped 100k)")
     p.add_argument("--str-len", type=int, default=12)
+    p.add_argument(
+        "--str-cols",
+        type=int,
+        default=None,
+        help="string columns in the table (default: 1 if any string op selected, else 0)",
+    )
     p.add_argument("--warmup", type=int, default=1)
     p.add_argument("--reps", type=int, default=5)
     p.add_argument("--seed", type=int, default=0)
@@ -83,6 +90,13 @@ def parse_args(argv=None) -> argparse.Namespace:
 def append_row(out_path: Path, row: dict) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     is_new = not out_path.exists()
+    if not is_new:
+        with out_path.open() as f:
+            existing = f.readline().strip().split(",")
+        if existing != CSV_FIELDS:
+            raise SystemExit(
+                f"{out_path} has an older column layout; write to a new file instead"
+            )
     with out_path.open("a", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
         if is_new:
@@ -100,11 +114,14 @@ def main(argv=None) -> None:
     for rows in args.rows:
         for skew in args.skew:
             need_strings = any(OPS[o].needs_strings for o in args.ops)
+            str_cols = args.str_cols if args.str_cols is not None else (1 if need_strings else 0)
+            if need_strings and str_cols < 1:
+                raise SystemExit("selected string ops need --str-cols >= 1")
             left_pd, right_pd = make_join_tables(
                 rows=rows,
                 n_keys=args.n_keys,
                 skew=skew,
-                str_cols=1 if need_strings else 0,
+                str_cols=str_cols,
                 str_len=args.str_len,
                 seed=args.seed,
             )
@@ -137,6 +154,7 @@ def main(argv=None) -> None:
                         "rows": rows,
                         "n_keys": args.n_keys or "",
                         "skew": skew,
+                        "str_cols": str_cols,
                         "str_len": args.str_len,
                         "warmup": args.warmup,
                         "reps": args.reps,
