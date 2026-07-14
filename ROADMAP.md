@@ -30,7 +30,7 @@ Each step is one focused session. Started 2026-07-10.
 
 - [x] Filed: rapidsai/cudf#23256 (2026-07-14)
 - [ ] Route A: PR the fix upstream (merge timing is theirs, not yours — don't block on it)
-- [ ] Route B: faster custom implementation (Numba/CuPy kernel or smarter algorithm) beating cuDF on the problem case
+- [x] Route B: Numba shared-mem/dense-tail prototype, identical results, 2.47x on skew 1.5/2.0 (results/routeb.csv)
 
 ## Step 5 — Write-up (1 session)
 

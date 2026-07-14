@@ -80,3 +80,17 @@ pip install -e . && pytest
 # figures
 python scripts/make_figs.py
 ```
+
+## Route B: prototype proof (benchmark/routeb.py)
+
+A heavy-hitter-aware aggregation (hot keys in per-block shared memory, tail keys
+in a dense direct-indexed table) computes the identical groupby result
+(asserted against cuDF's output) **2.47x faster on skewed keys** (11.6 ms vs
+28.6 ms at Zipf 1.5; 15.5 vs 38.4 at Zipf 2.0; T4, locked clocks —
+`results/routeb.csv`).
+
+Honest scope: the prototype exploits dense integer keys (direct indexing, no
+hash table), a specialization a general-purpose library cannot assume — it also
+wins on uniform keys for that reason. What it demonstrates is the
+contention-free *structure* (frequency-aware routing of hot vs tail keys) that
+rapidsai/cudf#23256 proposes gating into libcudf's hash groupby.
