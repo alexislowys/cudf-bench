@@ -1,5 +1,7 @@
 # Findings
 
+> Reported upstream: [rapidsai/cudf#23256](https://github.com/rapidsai/cudf/issues/23256)
+
 Investigation of NVIDIA cuDF `groupby.agg` performance on skewed keys.
 All numbers reproducible from committed CSVs in `results/`; every experiment is a
 notebook/script in this repo. Hardware: Google Colab Tesla T4, cudf 26.02.01.

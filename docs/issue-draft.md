@@ -1,4 +1,4 @@
-# DRAFT — GitHub issue for rapidsai/cudf (not yet filed)
+# Filed as [rapidsai/cudf#23256](https://github.com/rapidsai/cudf/issues/23256) on 2026-07-14
 
 **Title:** [BUG] Hash groupby ~1.5x slower on skewed keys: per-block cardinality gate disables shared-memory path exactly when hot-key atomic contention is worst
 

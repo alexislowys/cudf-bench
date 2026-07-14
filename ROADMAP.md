@@ -28,7 +28,7 @@ Each step is one focused session. Started 2026-07-10.
 
 ## Step 4 — Fix or prove (1–3 sessions, the real work)
 
-- [ ] File evidence-backed issue on rapidsai/cudf (this alone is a contribution — do it early, maintainers respond while you keep working)
+- [x] Filed: rapidsai/cudf#23256 (2026-07-14)
 - [ ] Route A: PR the fix upstream (merge timing is theirs, not yours — don't block on it)
 - [ ] Route B: faster custom implementation (Numba/CuPy kernel or smarter algorithm) beating cuDF on the problem case
 
