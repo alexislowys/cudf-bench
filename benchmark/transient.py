@@ -32,11 +32,25 @@ def main() -> None:
     p.add_argument("--gap", type=float, default=0.0, help="seconds to sleep between calls")
     p.add_argument("--rmm-pool", choices=["default", "prealloc"], default="default")
     p.add_argument("--pool-gib", type=int, default=8)
-    p.add_argument("--out", default="results/transient2.csv")
+    p.add_argument("--out", default="results/transient3.csv")
     args = p.parse_args()
 
     import cudf
     import cupy
+
+    # SM clock per call — the DVFS suspect needs direct evidence
+    try:
+        import pynvml
+
+        pynvml.nvmlInit()
+        _handle = pynvml.nvmlDeviceGetHandleByIndex(0)
+
+        def sm_clock() -> int:
+            return pynvml.nvmlDeviceGetClockInfo(_handle, pynvml.NVML_CLOCK_SM)
+    except Exception:
+
+        def sm_clock() -> int:
+            return -1
 
     if args.rmm_pool == "prealloc":
         import rmm
@@ -54,11 +68,12 @@ def main() -> None:
     else:
         run = lambda: gdf.sort_values("val0")
 
-    rows_out: list[tuple[int, float, float]] = []
+    rows_out: list[tuple[int, float, float, int]] = []
     for i in range(args.iters):
         if args.gap:
             time.sleep(args.gap)
         cupy.cuda.runtime.deviceSynchronize()
+        clock = sm_clock()
         ev_start, ev_stop = cupy.cuda.Event(), cupy.cuda.Event()
         wall_start = time.perf_counter()
         ev_start.record()
@@ -68,11 +83,12 @@ def main() -> None:
         ev_stop.synchronize()
         wall = time.perf_counter() - wall_start
         gpu_ms = cupy.cuda.get_elapsed_time(ev_start, ev_stop)
-        rows_out.append((i, wall * 1000, gpu_ms))
+        rows_out.append((i, wall * 1000, gpu_ms, clock))
 
     print(f"op={args.op} skew={args.skew} str_cols={args.str_cols} pool={args.rmm_pool} gap={args.gap}")
-    print("  wall(ms): " + " ".join(f"{w:5.1f}" for _, w, _ in rows_out))
-    print("  gpu (ms): " + " ".join(f"{g:5.1f}" for _, _, g in rows_out))
+    print("  wall(ms): " + " ".join(f"{w:5.1f}" for _, w, _, _ in rows_out))
+    print("  gpu (ms): " + " ".join(f"{g:5.1f}" for _, _, g, _ in rows_out))
+    print("  sm (MHz): " + " ".join(f"{c:5d}" for _, _, _, c in rows_out))
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -82,14 +98,14 @@ def main() -> None:
         if is_new:
             writer.writerow(
                 ["timestamp", "host", "device", "op", "rows", "skew", "str_cols",
-                 "rmm_pool", "gap", "iter", "wall_ms", "gpu_ms"]
+                 "rmm_pool", "gap", "iter", "wall_ms", "gpu_ms", "sm_mhz"]
             )
         stamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
         device = cupy.cuda.runtime.getDeviceProperties(0)["name"].decode()
-        for i, wall_ms, gpu_ms in rows_out:
+        for i, wall_ms, gpu_ms, clock in rows_out:
             writer.writerow(
                 [stamp, platform.node(), device, args.op, int(args.rows), args.skew,
-                 args.str_cols, args.rmm_pool, args.gap, i, round(wall_ms, 3), round(gpu_ms, 3)]
+                 args.str_cols, args.rmm_pool, args.gap, i, round(wall_ms, 3), round(gpu_ms, 3), clock]
             )
 
 
