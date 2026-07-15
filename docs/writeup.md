@@ -9,10 +9,10 @@ benchmarking [cuDF](https://github.com/rapidsai/cudf) — NVIDIA's drop-in GPU
 replacement for pandas — against pandas and Polars, and write up what I found.
 
 Instead I ended up filing a performance bug against NVIDIA's flagship data library
-([rapidsai/cudf#23256](https://github.com/rapidsai/cudf/issues/23256)), with the
-mechanism traced to a specific constant in their CUDA source, and a prototype showing
-the fix direction runs 2.47x faster. Here's the whole chase, including the three wrong
-theories I believed on the way.
+([rapidsai/cudf#23256](https://github.com/rapidsai/cudf/issues/23256)) — reproduced by
+a RAPIDS maintainer on a GH200 within hours — plus a prototype showing the fix
+direction runs 2.47x faster. Here's the whole chase, including the four wrong theories
+I believed on the way.
 
 ## The setup: build a stopwatch you can trust
 
