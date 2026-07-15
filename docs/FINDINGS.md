@@ -21,7 +21,20 @@ libraries (pandas, Polars) get ~2x *faster* on the same skewed input.**
 
 Steady-state medians over 11 in-process calls; per-call data in `results/transient3.csv`.
 
-## Proposed mechanism (source-backed hypothesis)
+## Mechanism — corrected upstream (2026-07-14)
+
+A RAPIDS maintainer (PointKernel) reproduced the penalty on a GH200 (24.0 vs
+39.2 ms, 1.63x) and corrected the mechanism below: the Zipf input has ~42k
+distinct keys (verified: 41,626 with seed 0) with the hottest key owning 38.4%
+of all rows — 3.84M atomic adds serializing on one output slot in the plain
+global-atomic path. The shared-memory path was never in play for either input:
+it is deliberately reserved for extreme concentration (rows collapsing onto 1–2
+keys, where contention costs 30–100x). The contention instinct was right; the
+threshold-gate framing below was wrong. Their proposed real fix:
+warp-aggregating same-key updates before the atomic — which they are looking
+into.
+
+## Original hypothesis as filed (kept for the record; gate framing superseded)
 
 libcudf's hash groupby has a fast path that aggregates in **shared memory**, added
 to fix exactly the problem skew creates — "serializing atomic operations over a
