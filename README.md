@@ -1,9 +1,10 @@
 # cudf-bench
 
 **Found, diagnosed, and reported a performance defect in NVIDIA's cuDF GPU dataframe
-library — with a working prototype of the fix.**
+library — reproduced by a RAPIDS maintainer on GH200 hardware, with a kernel-level fix
+direction now under investigation upstream.**
 
-> Upstream report: [rapidsai/cudf#23256](https://github.com/rapidsai/cudf/issues/23256) ·
+> Upstream report + maintainer discussion: [rapidsai/cudf#23256](https://github.com/rapidsai/cudf/issues/23256) ·
 > Full analysis: [docs/FINDINGS.md](docs/FINDINGS.md)
 
 ![skew penalty](results/figs/skew_penalty.png)
@@ -15,17 +16,18 @@ measured at locked GPU clocks so the gap is pure kernel time — while pandas an
 get ~2x *faster* on the same input. Real-world keys (customers, products, URLs) are
 almost always skewed.
 
-**Mechanism** (source-backed): libcudf's shared-memory aggregation fast path is gated
-per thread block on *distinct-key count* (`GROUPBY_CARDINALITY_THRESHOLD = 128`). A
-skewed distribution's long tail blows past the gate — disabling the fast path — while
-its hot head concentrates updates onto a few global-memory addresses, maximizing the
-atomic contention the path was built to avoid. The gate measures how many keys a block
-sees; contention is driven by how *concentrated* the updates are.
+**Mechanism** (confirmed and refined upstream): the Zipf input's hottest key owns
+38.4% of all rows — 3.84M atomic adds serializing on a single output slot in the
+global-atomic aggregation path. libcudf's shared-memory rescue path is deliberately
+reserved for far more extreme concentration (1–2 keys), so mid-skew data takes the
+contended path. A RAPIDS maintainer reproduced the penalty on a GH200 (1.63x),
+corrected my original code-path reading (kept for the record in FINDINGS), and is
+looking into warp-aggregating same-key updates before the atomic as the fix.
 
-**Prototype fix** ([benchmark/routeb.py](benchmark/routeb.py)): route hot keys through
-per-block shared memory, tail keys to storage spread wide. Identical results to cuDF
-(asserted), **2.47x faster on the skewed case** (caveats in FINDINGS — it exploits a
-dense-int-key specialization a general library cannot).
+**Prototype** ([benchmark/routeb.py](benchmark/routeb.py)): route sampled heavy
+hitters through per-block shared memory, tail keys to storage spread wide. Identical
+results to cuDF (asserted), **2.47x faster on the skewed case** (caveats in FINDINGS —
+it exploits a dense-int-key specialization a general library cannot).
 
 **Bonus methodology finding:** the T4 idles at 585 MHz and boosts to 1590 MHz only
 after ~6 back-to-back calls. Naive benchmark loops measure boost clocks; real
