@@ -1,9 +1,5 @@
 # I benchmarked NVIDIA's GPU dataframe library and found a bug in four days
 
-*Draft — Alexis's voice, edit before posting. Target: personal blog / LinkedIn article; condensed version for HN/r/CUDA comment.*
-
----
-
 I'm a data science student. Two weeks ago my plan was modest: learn GPU computing by
 benchmarking [cuDF](https://github.com/rapidsai/cudf) — NVIDIA's drop-in GPU
 replacement for pandas — against pandas and Polars, and write up what I found.
