@@ -36,7 +36,7 @@ collapsed from 33x to 6x.
 An easier job with a worse result is an engine problem, not a workload problem. I had
 my anomaly.
 
-## Three theories, three funerals
+## Four theories, four funerals
 
 **Theory 1: atomic contention.** Thousands of GPU threads all updating the same hot
 key's accumulator must serialize. Classic. Testable: uniform data with only 10
@@ -76,14 +76,20 @@ At locked clocks, preallocated pool, everything controlled: skewed groupby 23.7 
 uniform 16.0 ms. **1.48x, pure kernel time, only groupby** (sort doesn't care), only
 cuDF (CPU libraries speed up).
 
-The mechanism is in libcudf's source. Their hash groupby has a shared-memory fast path
-built precisely to avoid "serializing atomic operations over a small range of global
-memory" (their words, [#15262](https://github.com/rapidsai/cudf/issues/15262)). The
-gate: each thread block uses it only if it sees ≤ 128 distinct keys
-(`GROUPBY_CARDINALITY_THRESHOLD`). Skewed data is the gate's blind spot: the long tail
-pushes every block past 128 distinct keys — fast path off — while the hot head
-concentrates the actual *updates* onto a few global addresses — contention maxed. The
-gate counts keys; contention follows concentration.
+I read libcudf's source and formed a theory about their shared-memory fast path's
+cardinality gate (`GROUPBY_CARDINALITY_THRESHOLD = 128`) having a blind spot for
+skew. I put that reading in the issue, flagged as "happy to be corrected."
+
+**Theory 4 died too — killed by NVIDIA.** A RAPIDS maintainer reproduced my numbers
+on a GH200 within hours (1.63x there — so it's not a T4 quirk) and corrected the
+mechanism: my Zipf data has ~42k distinct keys with the hottest key owning **38.4% of
+all rows**. That's 3.84 million atomic adds serializing on *one output slot* in the
+plain global-atomic path. The shared-memory rescue path was never in play — it's
+deliberately reserved for far more extreme concentration (rows collapsing onto 1–2
+keys, where contention costs 30–100x, not 1.6x). My contention instinct was right;
+my story about *which code path* was wrong. Their proposed real fix —
+warp-aggregating same-key updates before the atomic — is now something they're
+looking into.
 
 ## Proving the fix direction
 
@@ -111,7 +117,8 @@ GPU parts on a free Colab T4.
    rep-by-rep times.
 2. **Your GPU benchmark is measuring DVFS until proven otherwise.** Log clocks, lock
    clocks.
-3. **Dead hypotheses are progress.** I was wrong three times in one day. Each wrong
-   theory died to a cheap, designed experiment — that's the job.
+3. **Dead hypotheses are progress.** I was wrong four times — three killed by my own
+   experiments, one by an NVIDIA engineer. Each death narrowed the truth; publishing
+   the graveyard is what makes the surviving claim credible.
 4. **You don't need permission or hardware.** Free Colab, an afternoon of Python, and
    stubbornness got a student's name onto NVIDIA's issue tracker.
