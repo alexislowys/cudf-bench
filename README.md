@@ -1,5 +1,7 @@
 # cudf-bench
 
+[![CI](https://github.com/alexislowys/cudf-bench/actions/workflows/ci.yml/badge.svg)](https://github.com/alexislowys/cudf-bench/actions/workflows/ci.yml)
+
 **Found, diagnosed, and reported a performance defect in NVIDIA's cuDF GPU dataframe
 library — reproduced by a RAPIDS maintainer on GH200 hardware, with a kernel-level fix
 direction now under investigation upstream.**
