@@ -6,7 +6,7 @@
 library — reproduced by a RAPIDS maintainer on GH200 hardware, with a kernel-level fix
 direction now under investigation upstream.**
 
-> Upstream report + maintainer discussion: [rapidsai/cudf#23256](https://github.com/rapidsai/cudf/issues/23256) ·
+> Upstream report + maintainer discussion: [NVIDIA/cudf#23256](https://github.com/NVIDIA/cudf/issues/23256) ·
 > Full analysis: [docs/FINDINGS.md](docs/FINDINGS.md)
 
 ![skew penalty](results/figs/skew_penalty.png)
@@ -78,3 +78,7 @@ tests/            datagen properties, cross-backend result equivalence, timer be
 Built and diagnosed 2026-07-10 → 2026-07-14 (harness → 112-cell stress grid → anomaly
 → five falsified hypotheses → source-level mechanism → upstream issue → prototype).
 [ROADMAP.md](ROADMAP.md) tracks the remaining polish.
+
+## License
+
+MIT © 2026 Alexis Low. See [LICENSE](LICENSE).
